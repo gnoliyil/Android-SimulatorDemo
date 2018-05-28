@@ -89,6 +89,15 @@
         android:layout_marginLeft="10dp" />
 
     <Button
+        android:id="@+id/btn_horizontal_coordinate"
+        android:text="Change Coordinate System"
+        style="@style/common_button"
+        android:layout_below="@+id/textview_simulator"
+        android:layout_toEndOf="@+id/btn_enable_virtual_stick"
+        android:layout_marginTop="107dp"
+        android:layout_marginLeft="10dp"/>
+
+    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Land"
@@ -99,6 +108,82 @@
         android:layout_alignEnd="@+id/directionJoystickRight"
         android:layout_toEndOf="@+id/btn_take_off"
         android:layout_marginLeft="10dp" />
+
+
+
+
+    <Button
+        android:id="@+id/btn_vertical_control_mode"
+        android:layout_below="@+id/btn_disable_virtual_stick"
+        android:layout_alignStart="@+id/btn_disable_virtual_stick"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_disable_virtual_stick"
+        android:text="Vertical Control Mode"
+        style="@style/common_button"/>
+
+    <Button
+        android:id="@+id/btn_yaw_control_mode"
+        android:layout_below="@+id/btn_take_off"
+        android:layout_alignStart="@+id/btn_take_off"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_take_off"
+        android:text="Yaw Control Mode"
+        style="@style/common_button"/>
+
+    <Button
+        android:id="@+id/btn_roll_pitch_control_mode"
+        android:layout_below="@+id/btn_land"
+        android:layout_alignStart="@+id/btn_land"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_land"
+        android:text="Pitch Roll Control Mode"
+        style="@style/common_button"/>
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Square"
+        style="@style/common_button"
+        android:id="@+id/btn_square"
+        android:layout_below="@+id/btn_vertical_control_mode"
+        android:layout_alignStart="@+id/btn_vertical_control_mode"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_vertical_control_mode" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:hint="Time for each edge (ms)"
+        android:inputType="number"
+        android:id="@+id/text_size"
+        android:layout_below="@+id/btn_square"
+        android:layout_alignStart="@+id/btn_square"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_square" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Triangle"
+        style="@style/common_button"
+        android:id="@+id/btn_triangle"
+        android:layout_below="@+id/btn_yaw_control_mode"
+        android:layout_alignStart="@+id/btn_yaw_control_mode"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_yaw_control_mode" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:hint="Velocity (m/s)"
+        android:id="@+id/text_velocity"
+        android:layout_below="@+id/btn_triangle"
+        android:layout_alignStart="@+id/btn_triangle"
+        android:layout_marginLeft="0dp"
+        android:layout_alignEnd="@+id/btn_triangle" />
 
     <com.dji.simulatorDemo.OnScreenJoystick
         android:id="@+id/directionJoystickLeft"

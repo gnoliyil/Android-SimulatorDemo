@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,6 +20,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -78,8 +80,16 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private ToggleButton mBtnSimulator;
     private Button mBtnTakeOff;
     private Button mBtnLand;
+    private Button mBtnSquare;
+    private Button mBtnTriangle;
+    private Button mBtnRollPitch;
+    private Button mBtnYaw;
+    private Button mBtnVertical;
+    private Button mBtnHorizontal;
 
     private TextView mTextView;
+    private EditText mEditSize;
+    private EditText mEditVelocity;
 
     private OnScreenJoystick mScreenJoystickRight;
     private OnScreenJoystick mScreenJoystickLeft;
@@ -91,6 +101,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
     private float mRoll;
     private float mYaw;
     private float mThrottle;
+    private boolean rollPitchControlModeFlag = true;
+    private boolean verticalControlModeFlag = true;
+    private boolean horizontalCoordinateFlag = true;
+    private boolean yawControlModeFlag = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,8 +115,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
         initUI();
 
         // Register the broadcast receiver for receiving the device connection's changes.
+        // Update for Nougat
         IntentFilter filter = new IntentFilter();
         filter.addAction(DJISimulatorApplication.FLAG_CONNECTION_CHANGE);
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         registerReceiver(mReceiver, filter);
     }
 
@@ -283,7 +299,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         Aircraft aircraft = DJISimulatorApplication.getAircraftInstance();
         if (aircraft == null || !aircraft.isConnected()) {
-            showToast("Disconnected");
+            showToast("Aircraft Disconnected");
             mFlightController = null;
             return;
         } else {
@@ -323,7 +339,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBtnTakeOff = (Button) findViewById(R.id.btn_take_off);
         mBtnLand = (Button) findViewById(R.id.btn_land);
         mBtnSimulator = (ToggleButton) findViewById(R.id.btn_start_simulator);
+        mBtnSquare = (Button) findViewById(R.id.btn_square);
+        mBtnTriangle = (Button) findViewById(R.id.btn_triangle);
+        mBtnRollPitch = (Button) findViewById(R.id.btn_roll_pitch_control_mode);
+        mBtnYaw = (Button) findViewById(R.id.btn_yaw_control_mode);
+        mBtnVertical = (Button) findViewById(R.id.btn_vertical_control_mode);
+        mBtnHorizontal = (Button) findViewById(R.id.btn_horizontal_coordinate);
         mTextView = (TextView) findViewById(R.id.textview_simulator);
+        mEditSize = (EditText) findViewById(R.id.text_size);
+        mEditVelocity = (EditText) findViewById(R.id.text_velocity);
         mConnectStatusTextView = (TextView) findViewById(R.id.ConnectStatusTextView);
         mScreenJoystickRight = (OnScreenJoystick)findViewById(R.id.directionJoystickRight);
         mScreenJoystickLeft = (OnScreenJoystick)findViewById(R.id.directionJoystickLeft);
@@ -332,6 +356,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         mBtnDisableVirtualStick.setOnClickListener(this);
         mBtnTakeOff.setOnClickListener(this);
         mBtnLand.setOnClickListener(this);
+        mBtnSquare.setOnClickListener(this);
+        mBtnTriangle.setOnClickListener(this);
+        mBtnRollPitch.setOnClickListener(this);
+        mBtnYaw.setOnClickListener(this);
+        mBtnVertical.setOnClickListener(this);
+        mBtnHorizontal.setOnClickListener(this);
 
         mBtnSimulator.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -384,27 +414,23 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onTouch(OnScreenJoystick joystick, float pX, float pY) {
-                if(Math.abs(pX) < 0.02 ){
-                    pX = 0;
-                }
+            if (Math.abs(pX) < 0.02) {
+                pX = 0;
+            }
 
-                if(Math.abs(pY) < 0.02 ){
-                    pY = 0;
-                }
+            if (Math.abs(pY) < 0.02) {
+                pY = 0;
+            }
+            float pitchJoyControlMaxSpeed = 10;
+            float rollJoyControlMaxSpeed = 10;
 
-                float pitchJoyControlMaxSpeed = 10;
-                float rollJoyControlMaxSpeed = 10;
-
-                mPitch = (float)(pitchJoyControlMaxSpeed * pX);
-
-                mRoll = (float)(rollJoyControlMaxSpeed * pY);
-
-                if (null == mSendVirtualStickDataTimer) {
-                    mSendVirtualStickDataTask = new SendVirtualStickDataTask();
-                    mSendVirtualStickDataTimer = new Timer();
-                    mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 200);
-                }
-
+            if (rollPitchControlModeFlag) {
+                mPitch = (float) (pitchJoyControlMaxSpeed * pX);
+                mRoll = (float) (rollJoyControlMaxSpeed * pY);
+            } else {
+                mPitch = -(float) (pitchJoyControlMaxSpeed * pY);
+                mRoll = (float) (rollJoyControlMaxSpeed * pX);
+            }
             }
 
         });
@@ -413,31 +439,31 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
             @Override
             public void onTouch(OnScreenJoystick joystick, float pX, float pY) {
-                if(Math.abs(pX) < 0.02 ){
-                    pX = 0;
-                }
+            if(Math.abs(pX) < 0.02 ){
+                pX = 0;
+            }
 
-                if(Math.abs(pY) < 0.02 ){
-                    pY = 0;
-                }
-                float verticalJoyControlMaxSpeed = 2;
-                float yawJoyControlMaxSpeed = 30;
+            if(Math.abs(pY) < 0.02 ){
+                pY = 0;
+            }
+            float verticalJoyControlMaxSpeed = 2;
+            float yawJoyControlMaxSpeed = 45;
 
-                mYaw = (float)(yawJoyControlMaxSpeed * pX);
-                mThrottle = (float)(verticalJoyControlMaxSpeed * pY);
+            mYaw = (float)(yawJoyControlMaxSpeed * pX);
+            mThrottle = (float)(verticalJoyControlMaxSpeed * pY);
 
-                if (null == mSendVirtualStickDataTimer) {
-                    mSendVirtualStickDataTask = new SendVirtualStickDataTask();
-                    mSendVirtualStickDataTimer = new Timer();
-                    mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 0, 200);
-                }
-
+            if (null == mSendVirtualStickDataTimer) {
+                mSendVirtualStickDataTask = new SendVirtualStickDataTask();
+                mSendVirtualStickDataTimer = new Timer();
+                mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 0, 200);
+            }
             }
         });
     }
 
     @Override
     public void onClick(View v) {
+        initFlightController();
 
         switch (v.getId()) {
             case R.id.btn_enable_virtual_stick:
@@ -508,12 +534,194 @@ public class MainActivity extends Activity implements View.OnClickListener {
                             }
                     );
 
+                    mSendVirtualStickDataTimer.cancel();
+                    mSendVirtualStickDataTask = null;
+                }
+
+                break;
+                
+            case R.id.btn_square:
+                if (mFlightController != null) {
+                    mFlightController.setYawControlMode(YawControlMode.ANGLE);
+                    mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+                    // mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+                    mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+
+                    DrawSquareTask drawSquareTask = new DrawSquareTask();
+                    Timer drawSquareTaskTimer = new Timer();
+                    drawSquareTaskTimer.schedule(drawSquareTask, 0);
+
+                    showToast("created drawSquareTask");
                 }
 
                 break;
 
+            case R.id.btn_triangle:
+                if (mFlightController != null) {
+                    mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+                    mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+                    // mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+                    mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+
+                    DrawTriangleTask drawTriangleTask = new DrawTriangleTask();
+                    Timer drawTriangleTaskTimer = new Timer();
+                    drawTriangleTaskTimer.schedule(drawTriangleTask, 0);
+
+                    showToast("created drawTriangleTask");
+                }
+
+                break;
+
+            case R.id.btn_roll_pitch_control_mode:
+                if (rollPitchControlModeFlag) {
+                    mFlightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);
+                    rollPitchControlModeFlag = false;
+                } else {
+                    mFlightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);
+                    rollPitchControlModeFlag = true;
+                }
+                showToast(mFlightController.getRollPitchControlMode().name());
+                break;
+
+            case R.id.btn_yaw_control_mode:
+                if (yawControlModeFlag) {
+                    mFlightController.setYawControlMode(YawControlMode.ANGLE);
+                    yawControlModeFlag = false;
+                } else {
+                    mFlightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);
+                    yawControlModeFlag = true;
+                }
+                showToast(mFlightController.getYawControlMode().name());
+                break;
+
+            case R.id.btn_vertical_control_mode:
+                if (verticalControlModeFlag) {
+                    mFlightController.setVerticalControlMode(VerticalControlMode.POSITION);
+                    verticalControlModeFlag = false;
+                } else {
+                    mFlightController.setVerticalControlMode(VerticalControlMode.VELOCITY);
+                    verticalControlModeFlag = true;
+                }
+                showToast(mFlightController.getVerticalControlMode().name());
+                break;
+
+            case R.id.btn_horizontal_coordinate:
+                if (horizontalCoordinateFlag) {
+                    mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.GROUND);
+                    horizontalCoordinateFlag = false;
+                } else {
+                    mFlightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);
+                    horizontalCoordinateFlag = true;
+                }
+                showToast(mFlightController.getRollPitchCoordinateSystem().name());
+                break;
+                
             default:
                 break;
+        }
+    }
+
+    class DrawTriangleTask extends TimerTask {
+
+        @Override
+        public void run() {
+
+            long timeToRun = Integer.valueOf(String.valueOf(mEditSize.getText()));
+            long velocity = Integer.valueOf(String.valueOf(mEditVelocity.getText()));
+
+            if (timeToRun < 1000)
+                timeToRun = 1000;
+
+            for (int edge = 0; edge < 4; edge ++) {
+                showToast("Drawing edge #" + edge);
+                switch (edge) {
+                    case 0: {
+                        mPitch = velocity; mRoll = 0;
+                        break;
+                    }
+                    case 1: {
+                        mPitch = -0.5f * velocity; mRoll = 0.866f * velocity;
+                        break;
+                    }
+                    case 2: {
+                        mPitch = -0.5f * velocity; mRoll = -0.866f * velocity;
+                        break;
+                    }
+                    case 3: {
+                        mPitch = 0; mRoll = 0;
+                        break;
+                    }
+                }
+
+                if (null == mSendVirtualStickDataTimer) {
+                    mSendVirtualStickDataTask = new SendVirtualStickDataTask();
+                    mSendVirtualStickDataTimer = new Timer();
+                    mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 200);
+                }
+
+                if (edge == 3)
+                    break;
+
+                try {
+                    Thread.sleep(timeToRun);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    class DrawSquareTask extends TimerTask {
+
+        @Override
+        public void run() {
+
+            long timeToRun = Integer.valueOf(String.valueOf(mEditSize.getText()));
+            float velocity = Float.valueOf(String.valueOf(mEditVelocity.getText()));
+
+            if (timeToRun < 1000)
+                timeToRun = 1000;
+
+            for (int edge = 0; edge < 5; edge ++) {
+                showToast("Drawing edge #" + edge);
+                switch (edge) {
+                    case 0: {
+                        mPitch = velocity; mRoll = 0; mYaw = 0;
+                        break;
+                    }
+                    case 1: {
+                        mPitch = 0; mRoll = velocity; mYaw = 0;
+                        break;
+                    }
+                    case 2: {
+                        mPitch = -velocity; mRoll = 0; mYaw = 0;
+                        break;
+                    }
+                    case 3: {
+                        mPitch = 0; mRoll = -velocity; mYaw = 0;
+                        break;
+                    }
+                    case 4: {
+                        mPitch = 0; mRoll = 0; mYaw = 0;
+                        break;
+                    }
+                }
+
+                if (null == mSendVirtualStickDataTimer) {
+                    mSendVirtualStickDataTask = new SendVirtualStickDataTask();
+                    mSendVirtualStickDataTimer = new Timer();
+                    mSendVirtualStickDataTimer.schedule(mSendVirtualStickDataTask, 100, 200);
+                }
+
+                if (edge == 4)
+                    break;
+
+                try {
+                    Thread.sleep(timeToRun);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
